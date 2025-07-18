@@ -58,6 +58,7 @@ First, set up your environment variables for the backend. You can do this in you
 -   spring.datasource.password=your_mysql_password
 -   OPENAI_API_KEY=your_openai_key
 -   USDA_API_KEY=your_usda_key_if_applicable
+```
 
 Then, from the backend directory, run:
 
@@ -67,6 +68,7 @@ Then, from the backend directory, run:
 
 # Run the Spring Boot application
 ./mvnw spring-boot:run
+```
 
 The backend server will start on [http://localhost:8080](http://localhost:8080).
 
@@ -77,12 +79,15 @@ In a separate terminal, set up the frontend. Create a .env.local file in the fro
 ``` Credentials for Google Sign-In
 -   GOOGLE_CLIENT_ID=your_google_client_id
 -   GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
 
 ``` A long, random string for session encryption
 -   NEXTAUTH_SECRET=generate_a_random_secret_here
+```
 
 ``` The base URL for your backend API
 -   NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+```
 
 Then, from the `frontend` directory:
 
@@ -92,5 +97,6 @@ npm install
 
 # Run the development server
 npm run dev
+```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
