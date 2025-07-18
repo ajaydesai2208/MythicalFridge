@@ -53,11 +53,11 @@ To run the complete application locally, you will need to run both the backend a
 First, set up your environment variables for the backend. You can do this in your system environment or in an `application.properties` file.
 
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/your_database_name
-spring.datasource.username=your_mysql_user
-spring.datasource.password=your_mysql_password
-OPENAI_API_KEY=your_openai_key
-USDA_API_KEY=your_usda_key_if_applicable
+-   spring.datasource.url=jdbc:mysql://localhost:3306/your_database_name
+-   spring.datasource.username=your_mysql_user
+-   spring.datasource.password=your_mysql_password
+-   OPENAI_API_KEY=your_openai_key
+-   USDA_API_KEY=your_usda_key_if_applicable
 
 Then, from the backend directory, run:
 
@@ -74,15 +74,15 @@ The backend server will start on [http://localhost:8080](http://localhost:8080).
 
 In a separate terminal, set up the frontend. Create a .env.local file in the frontend directory:
 
-# Credentials for Google Sign-In
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+``` Credentials for Google Sign-In
+-   GOOGLE_CLIENT_ID=your_google_client_id
+-   GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-# A long, random string for session encryption
-NEXTAUTH_SECRET=generate_a_random_secret_here
+``` A long, random string for session encryption
+-   NEXTAUTH_SECRET=generate_a_random_secret_here
 
-# The base URL for your backend API
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+``` The base URL for your backend API
+-   NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 Then, from the `frontend` directory:
 
