@@ -1,69 +1,28 @@
-"use client";
+import { auth } from "@/auth";
+import { getIngredients } from "@/app/actions/ingredients";
+import { redirect } from "next/navigation";
+import { Refrigerator } from "lucide-react";
+import IngredientsClient from "@/components/IngredientsClient";
 
-import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import { AddIngredientDialog } from "@/components/AddIngredientDialog";
-import { IngredientsTable } from "@/components/IngredientsTable";
-import { ToastProvider, ToastViewport } from "@/components/ui/toast";
-
-export interface Ingredient {
-  id: number;
-  name: string;
-  quantity: number;
-  unit: string;
-}
-
-export default function IngredientsPage() {
-  const { data: session, status } = useSession();
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Once we have a session (authenticated), fetch ingredients
-  useEffect(() => {
-    if (status !== "authenticated") return;
-    const email = session.user?.email;
-    if (!email) return;
-
-    fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ingredients/get?email=${encodeURIComponent(
-        email
-      )}`,
-      { cache: "no-store" }
-    )
-      .then((res) => {
-        if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
-        return res.json() as Promise<Ingredient[]>;
-      })
-      .then((data) => setIngredients(data))
-      .catch((err) => {
-        console.error("Failed to load ingredients:", err);
-      })
-      .finally(() => setLoading(false));
-  }, [status, session]);
-
-  if (status === "loading" || loading) {
-    return <p className="p-4">Loading ingredients…</p>;
+export default async function IngredientsPage() {
+  const session = await auth();
+  if (!session?.user?.email) {
+    redirect("/");
   }
 
-  if (status !== "authenticated" || !session.user?.email) {
-    return <p className="p-4 text-red-500">Not authenticated.</p>;
-  }
-
-  const email = session.user.email;
+  const ingredients = await getIngredients(session.user.email);
 
   return (
-    <div className="container mx-auto p-4">
-      <ToastProvider>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">Ingredients</h2>
-          <AddIngredientDialog email={email} />
-        </div>
+    <div className="container mx-auto py-10 px-4">
+      <div className="flex flex-col items-center text-center mb-12">
+        <Refrigerator className="w-12 h-12 text-cyan-400 mb-4" />
+        <h1 className="text-4xl font-bold tracking-tighter">My Fridge</h1>
+        <p className="max-w-xl mt-2 text-muted-foreground">
+          Here are the ingredients you currently have on hand. Add or remove items to get the best recipe recommendations.
+        </p>
+      </div>
 
-        {/* Now fully client: filter, paginate, and dialogs will never SSR */}
-        <IngredientsTable ingredients={ingredients} email={email} />
-
-        <ToastViewport />
-      </ToastProvider>
+      <IngredientsClient initialIngredients={ingredients} />
     </div>
   );
 }

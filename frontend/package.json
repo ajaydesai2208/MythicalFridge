@@ -1,7 +1,8 @@
 {
-  "name": "virtualfridge",
+  "name": "mythical-fridge-frontend",
   "version": "0.1.0",
   "private": true,
+  "description": "The frontend for the Mythical Fridge application.",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

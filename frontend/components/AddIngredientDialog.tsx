@@ -1,152 +1,154 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
 import {
-  Toast,
-  ToastTitle,
-  ToastDescription,
-  ToastClose,
-} from "@/components/ui/toast";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon, PlusCircle } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
-type AddIngredientDialogProps = {
-  email: string;
-};
+interface AddIngredientDialogProps {
+  onAddIngredient: (
+    name: string,
+    quantity: number,
+    unit: string,
+    expirationDate: Date | undefined
+  ) => void;
+}
 
-export function AddIngredientDialog({ email }: AddIngredientDialogProps) {
-  const [open, setOpen] = React.useState(false);
-  const [name, setName] = React.useState("");
-  const [quantity, setQuantity] = React.useState("");
-  const [unit, setUnit] = React.useState("");
-  const [loading, setLoading] = React.useState(false);
-  const [toastOpen, setToastOpen] = React.useState(false);
-  const [toastVariant, setToastVariant] = React.useState<
-    "success" | "error"
-  >("success");
-  const router = useRouter();
+export default function AddIngredientDialog({
+  onAddIngredient,
+}: AddIngredientDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [quantity, setQuantity] = useState<number | string>("");
+  const [unit, setUnit] = useState("");
+  const [expirationDate, setExpirationDate] = useState<Date | undefined>(
+    new Date()
+  );
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSave() {
-    setLoading(true);
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ingredients/add?email=${encodeURIComponent(
-          email
-        )}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            quantity: Number(quantity),
-            unit,
-          }),
-        }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setOpen(false);
-      router.refresh();
-      setToastVariant("success");
-    } catch {
-      setToastVariant("error");
-    } finally {
-      setLoading(false);
-      setToastOpen(true);
+  const handleSubmit = () => {
+    if (!name || !quantity || !unit || !expirationDate) {
+      setError("All fields are required.");
+      return;
     }
-  }
+    setError(null);
+    onAddIngredient(name, Number(quantity), unit, expirationDate);
+    // Reset form and close dialog
+    setName("");
+    setQuantity("");
+    setUnit("");
+    setExpirationDate(new Date());
+    setOpen(false);
+  };
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="default" size="sm">
-            Add Ingredient
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Ingredient</DialogTitle>
-            <DialogDescription>
-              Provide details for the new ingredient.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col space-y-4">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-emerald-500 hover:bg-emerald-600">
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Ingredient
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px] bg-slate-900 border-slate-700">
+        <DialogHeader>
+          <DialogTitle className="text-white">Add New Ingredient</DialogTitle>
+          <DialogDescription>
+            Enter the details of the ingredient you want to add to your fridge.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right text-slate-300">
+              Name
+            </Label>
             <Input
-              placeholder="Name"
+              id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              disabled={loading}
+              className="col-span-3"
+              placeholder="e.g., Chicken Breast"
             />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="quantity" className="text-right text-slate-300">
+              Quantity
+            </Label>
             <Input
-              placeholder="Quantity"
+              id="quantity"
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              disabled={loading}
-            />
-            <Input
-              placeholder="Unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              disabled={loading}
+              className="col-span-3"
+              placeholder="e.g., 2"
             />
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setOpen(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleSave}
-              disabled={loading}
-            >
-              {loading ? "Saving..." : "Save"}
-            </Button>
-          </DialogFooter>
-          <DialogClose asChild>
-            <button className="sr-only">Close</button>
-          </DialogClose>
-        </DialogContent>
-      </Dialog>
-
-      {toastOpen && (
-        <Toast
-          open={toastOpen}
-          variant={toastVariant}
-          onOpenChange={setToastOpen}
-        >
-          <ToastTitle>
-            {toastVariant === "success"
-              ? "Ingredient added!"
-              : "Error"}
-          </ToastTitle>
-          <ToastDescription>
-            {toastVariant === "success"
-              ? "Your ingredient was saved."
-              : "Failed to add ingredient."}
-          </ToastDescription>
-          <ToastClose />
-        </Toast>
-      )}
-    </>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="unit" className="text-right text-slate-300">
+              Unit
+            </Label>
+            <Input
+              id="unit"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              className="col-span-3"
+              placeholder="e.g., lbs, slices, oz"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right text-slate-300">Expires</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "col-span-3 justify-start text-left font-normal",
+                    !expirationDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {expirationDate ? (
+                    format(expirationDate, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={expirationDate}
+                  onSelect={setExpirationDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="submit" onClick={handleSubmit}>
+            Save Ingredient
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
-AddIngredientDialog.displayName = "AddIngredientDialog";

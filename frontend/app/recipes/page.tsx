@@ -1,31 +1,44 @@
-// app/recipes/page.tsx
-import React from "react";
 import { auth } from "@/auth";
-import { RecipesClient, type Recipe } from "@/components/RecipesClient";
-
-async function fetchRecipes(email: string): Promise<Recipe[]> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/recipes/get?email=${encodeURIComponent(
-      email
-    )}`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) throw new Error(`Failed to fetch recipes (${res.status})`);
-  return res.json();
-}
+import { getIngredients } from "@/app/actions/ingredients";
+import RecipesClient from "@/components/RecipesClient";
+import { redirect } from "next/navigation";
+import { UtensilsCrossed, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default async function RecipesPage() {
   const session = await auth();
   if (!session?.user?.email) {
-    throw new Error("Not authenticated");
+    redirect("/");
   }
-  const email = session.user.email;
-  const recipes = await fetchRecipes(email);
+
+  const ingredients = await getIngredients(session.user.email);
+
+  if (!ingredients || ingredients.length === 0) {
+    return (
+      <div className="container mx-auto py-10 px-4 text-center">
+        <AlertTriangle className="mx-auto h-12 w-12 text-yellow-400" />
+        <h2 className="mt-4 text-2xl font-semibold">Your Fridge is Empty!</h2>
+        <p className="mt-2 text-muted-foreground">
+          You need to add ingredients to your fridge before we can generate recipes.
+        </p>
+        <Button asChild className="mt-6">
+          <Link href="/ingredients">Add Ingredients</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-4">
-      {/* server-only: fetch + pass into client wrapper */}
-      <RecipesClient initialRecipes={recipes} email={email} />
+    <div className="container mx-auto py-10 px-4">
+      <div className="flex flex-col items-center text-center mb-12">
+        <UtensilsCrossed className="w-12 h-12 text-emerald-400 mb-4" />
+        <h1 className="text-4xl font-bold tracking-tighter">Generate Recipes</h1>
+        <p className="max-w-xl mt-2 text-muted-foreground">
+          Select your dietary preferences below and let us conjure some mythical recipes for you.
+        </p>
+      </div>
+      <RecipesClient initialIngredients={ingredients} />
     </div>
   );
 }

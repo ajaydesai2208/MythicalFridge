@@ -1,42 +1,38 @@
-// app/layout.tsx
-import "@/app/globals.css";
 import type { Metadata } from "next";
-import localFont from "next/font/local";
-import NavBar from "../components/NavBar/NavBar";
-import { Providers } from "@/components/Providers" // ← add this
-
-
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+import { GeistSans } from "geist/font/sans";
+import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { SessionProvider } from "next-auth/react";
+import NavBar from "@/components/NavBar/NavBar";
 
 export const metadata: Metadata = {
-  title: "VirtualFridge",
-  description: "Your fridge but better.",
+  title: {
+    template: "%s | Mythical Fridge",
+    default: "Mythical Fridge",
+  },
+  description: "Generate magical recipes from the ingredients in your fridge.",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        <Providers>
-        <NavBar />
-        <main className="flex-1">{children}</main>
-        </Providers>
+      <body className={GeistSans.className}>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <NavBar />
+            <main>{children}</main>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
-  )
+  );
 }
