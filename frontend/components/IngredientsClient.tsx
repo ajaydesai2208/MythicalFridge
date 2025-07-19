@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useCallback } from "react"; // <-- Import useCallback
 import {
   Card,
   CardContent,
@@ -11,9 +10,10 @@ import {
 } from "@/components/ui/card";
 import { addIngredient, deleteIngredientById, getIngredients } from "@/app/actions/ingredients";
 import { useSession } from "next-auth/react";
-import { PlusCircle, Trash2, CalendarIcon } from "lucide-react";
+import { Trash2, CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import AddIngredientDialog from "./AddIngredientDialog";
+import { Button } from "@/components/ui/button";
 
 // Define the Ingredient type based on your backend model
 interface Ingredient {
@@ -25,52 +25,47 @@ interface Ingredient {
 }
 
 export default function IngredientsClient() {
-  // State is now initialized as empty and a loading flag is added
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { data: session } = useSession();
 
-  // useEffect hook to fetch data only on the client-side
-  useEffect(() => {
+  // THE FIX: Wrap fetchIngredients in useCallback
+  const fetchIngredients = useCallback(async () => {
     if (session?.user?.email) {
-      getIngredients(session.user.email).then(data => {
-        setIngredients(data);
-        setIsLoading(false); // Stop loading once data is fetched
-      });
+      setIsLoading(true);
+      const freshIngredients = await getIngredients(session.user.email);
+      setIngredients(freshIngredients);
+      setIsLoading(false);
     }
-  }, [session]); // This effect runs when the user session becomes available
+  }, [session]); // Dependency array for useCallback
+
+  // Fetch initial data when the component mounts and the session is available
+  useEffect(() => {
+    fetchIngredients();
+  }, [fetchIngredients, session]); // Add fetchIngredients to the dependency array
 
   const handleAddIngredient = async (name: string, quantity: number, unit: string, expirationDate: Date | undefined) => {
     if (!session?.user?.email || !expirationDate) return;
-
     const newIngredientData = { name, quantity, unit, expirationDate: format(expirationDate, "yyyy-MM-dd") };
-    const addedIngredient = await addIngredient(session.user.email, newIngredientData);
-    
-    if (addedIngredient) {
-        setIngredients(prev => [...prev, addedIngredient]);
-    }
+    await addIngredient(session.user.email, newIngredientData);
+    await fetchIngredients();
   };
 
   const handleDelete = async (id: number) => {
     if (!session?.user?.email) return;
     await deleteIngredientById(id);
-    const updatedIngredients = await getIngredients(session.user.email);
-    setIngredients(updatedIngredients);
+    await fetchIngredients();
   };
 
-  // Display a loading skeleton while data is being fetched
   if (isLoading) {
     return (
-        <div className="max-w-4xl mx-auto animate-pulse">
-            <div className="flex justify-end mb-4">
-                 <div className="h-10 w-36 bg-slate-700 rounded-md"></div>
-            </div>
-            <div className="h-60 w-full bg-slate-900/50 border border-slate-700/50 rounded-lg"></div>
-        </div>
-    );
+      <div className="max-w-4xl mx-auto text-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-emerald-500" />
+          <p className="mt-4 text-muted-foreground">Loading Your Fridge...</p>
+      </div>
+    )
   }
 
-  // Once loading is complete, render the actual component
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-end mb-4">

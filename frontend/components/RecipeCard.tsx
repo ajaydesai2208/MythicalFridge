@@ -21,8 +21,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Flame, Heart } from "lucide-react";
+import { Flame, Heart, ChefHat } from "lucide-react"; // <-- Import ChefHat icon
 import { toggleFavoriteStatus } from "@/app/actions/favorites";
+import { cookRecipeAction } from "@/app/actions/cooking"; // <-- Import the new action
 import { useToast } from "@/components/ui/use-toast";
 import { Recipe } from "@/app/actions/recipes";
 
@@ -34,47 +35,40 @@ interface RecipeCardProps {
 export function RecipeCard({ recipe, onFavoriteToggle }: RecipeCardProps) {
   const { data: session } = useSession();
   const { toast } = useToast();
-  
-  // THE FIRST FIX: The component's internal state is correctly initialized from the recipe prop.
   const [isFavorited, setIsFavorited] = useState(recipe.isFavorited);
+  const [isCooking, setIsCooking] = useState(false); // State for loading
 
-  // THE SECOND FIX: This useEffect hook is the key. It ensures that if the recipe prop ever changes,
-  // or on the initial load of the favorites page, the component's internal state is
-  // updated to match the true status from the backend.
   useEffect(() => {
     setIsFavorited(recipe.isFavorited);
   }, [recipe.isFavorited, recipe.id]);
 
   const handleFavoriteClick = async () => {
     if (!session?.user?.email || !recipe.id) return;
-    
-    // Determine the new state before making the API call
     const newFavoritedState = !isFavorited;
-
-    // Call the callback to remove the card from the UI immediately if on the favorites page
-    if (onFavoriteToggle && !newFavoritedState) {
-      onFavoriteToggle(recipe.id);
-    }
-
-    // Update the local UI state optimistically
     setIsFavorited(newFavoritedState);
-
+    if (onFavoriteToggle) onFavoriteToggle(recipe.id);
     const result = await toggleFavoriteStatus(session.user.email, recipe.id);
-    
     if (result.success) {
-      // THE THIRD FIX: The toast message is now based on the new state, which will be correct.
-      toast({
-        title: newFavoritedState ? "Added to Favorites!" : "Removed from Favorites",
-      });
+      toast({ title: newFavoritedState ? "Added to Favorites!" : "Removed from Favorites" });
     } else {
-      // If the server call fails, revert the optimistic UI update
       setIsFavorited(!newFavoritedState);
-      toast({
-        title: "Uh oh! Something went wrong.",
-        description: "Could not update your favorites. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Uh oh! Something went wrong.", variant: "destructive" });
     }
+  };
+
+  // --- NEW FUNCTION FOR COOKING ---
+  const handleCookClick = async () => {
+    if (!session?.user?.email || !recipe.id) return;
+    
+    setIsCooking(true);
+    const result = await cookRecipeAction(session.user.email, recipe.id);
+    setIsCooking(false);
+
+    toast({
+        title: result.success ? "Success!" : "Oh no!",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+    });
   };
 
   const {
@@ -115,17 +109,30 @@ export function RecipeCard({ recipe, onFavoriteToggle }: RecipeCardProps) {
                 <DialogTitle className="text-3xl font-bold tracking-tight text-emerald-400">{title}</DialogTitle>
                 <DialogDescription className="text-slate-400 pt-2">{description}</DialogDescription>
               </div>
-              <Button size="icon" variant="ghost" onClick={handleFavoriteClick} aria-label="Favorite recipe">
-                <Heart 
-                  className="w-6 h-6 text-pink-500 transition-all"
-                  fill={isFavorited ? 'currentColor' : 'none'} // Fill based on the component's internal state
-                />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="icon" variant="ghost" onClick={handleFavoriteClick} aria-label="Favorite recipe">
+                  <Heart 
+                    className="w-6 h-6 text-pink-500 transition-all"
+                    fill={isFavorited ? 'currentColor' : 'none'}
+                  />
+                </Button>
+                {/* --- NEW "COOK" BUTTON --- */}
+                <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={handleCookClick} 
+                    disabled={isCooking}
+                    aria-label="Cook this recipe"
+                >
+                  <ChefHat className="w-6 h-6 text-cyan-400" />
+                </Button>
+              </div>
             </div>
           </DialogHeader>
 
           <Separator className="my-4 bg-slate-700" />
 
+          {/* ... (rest of the dialog content remains the same) ... */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold text-lg text-white mb-2">Ingredients</h3>

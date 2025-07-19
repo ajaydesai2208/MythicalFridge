@@ -71,7 +71,18 @@ public class RecipeService {
                         .collect(Collectors.toList());
                 recipe.setInstructions(instructionEntities);
                 
-                recipe.setIngredients(dto.getIngredients());
+                // --- THE FIX IS HERE: Correctly map all fields from the DTO ---
+                List<RecipeIngredient> ingredientEntities = new ArrayList<>();
+                for (RecipeIngredientDTO ingredientDto : dto.getIngredients()) {
+                    RecipeIngredient ingredient = new RecipeIngredient();
+                    ingredient.setName(ingredientDto.getName());
+                    ingredient.setQuantity(ingredientDto.getQuantity());
+                    ingredient.setValue(ingredientDto.getValue());
+                    ingredient.setUnit(ingredientDto.getUnit());
+                    ingredientEntities.add(ingredient);
+                }
+                recipe.setIngredients(ingredientEntities);
+                // --- END FIX ---
 
                 for (Instruction instruction : recipe.getInstructions()) {
                     instruction.setRecipe(recipe);
@@ -85,7 +96,6 @@ public class RecipeService {
 
                 Recipe savedRecipe = recipeRepository.save(recipe);
 
-                // THE FIX: Check if the *saved* recipe's ID is in the user's favorites
                 if (favoriteRecipeIds.contains(savedRecipe.getId())) {
                     savedRecipe.setFavorited(true);
                 }

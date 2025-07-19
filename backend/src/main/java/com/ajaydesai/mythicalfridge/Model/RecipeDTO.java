@@ -8,5 +8,5 @@ public class RecipeDTO {
     private String title;
     private String description;
     private List<String> instructions;
-    private List<RecipeIngredient> ingredients;
+    private List<RecipeIngredientDTO> ingredients;
 }

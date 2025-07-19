@@ -20,6 +20,12 @@ public class UserController {
     @Autowired
     private UserServiceInterface userService;
 
+    // This DTO can be defined here for simplicity
+    public static class CookRecipeRequest {
+        public String userEmail;
+        public Long recipeId;
+    }
+
     @PostMapping("/findOrCreate")
     public ResponseEntity<UserEntity> findOrCreateUser(@RequestBody User user) {
         UserEntity userEntity = userService.findOrCreateUser(user);
@@ -38,11 +44,10 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    // THE NEW ENDPOINT IS ADDED HERE
     @PostMapping("/cookRecipe")
-    public ResponseEntity<?> cookRecipe(@RequestBody Map<String, Object> payload) {
-        String userEmail = (String) payload.get("userEmail");
-        Long recipeId = ((Number) payload.get("recipeId")).longValue();
-        userService.cookRecipe(userEmail, recipeId);
+    public ResponseEntity<?> cookRecipe(@RequestBody CookRecipeRequest request) {
+        userService.cookRecipe(request.userEmail, request.recipeId);
         return ResponseEntity.ok().build();
     }
 }

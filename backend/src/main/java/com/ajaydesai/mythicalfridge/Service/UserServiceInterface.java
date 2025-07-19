@@ -10,5 +10,6 @@ public interface UserServiceInterface {
     UserEntity findOrCreateUser(User user);
     CalorieCalcResultDTO calculateCalories(CalorieCalcDTO calorieCalcDTO);
     void setUserGoals(SetGoalsRequestDTO request);
+    // THE NEW METHOD IS ADDED HERE
     void cookRecipe(String userEmail, Long recipeId);
 }

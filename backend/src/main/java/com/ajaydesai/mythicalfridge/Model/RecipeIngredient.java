@@ -15,9 +15,17 @@ public class RecipeIngredient {
     private Long id;
 
     private String name;
+    
+    // This is the human-readable quantity, e.g., "1 cup"
     private String quantity;
 
-    // THE FIX: Add a reference back to the parent Recipe
+    // --- NEW FIELDS FOR SMART INVENTORY ---
+    // This is the numerical value, e.g., 200
+    private double value; 
+    // This is the standardized unit, e.g., "g", "ml", "pcs"
+    private String unit;
+    // --- END NEW FIELDS ---
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id")
     @JsonBackReference
