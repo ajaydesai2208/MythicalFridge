@@ -17,15 +17,26 @@ import java.util.Map;
 @Service
 public class USDAService {
 
-    @Value("${usda.api.key}")
+    @Value("${usda.api.key:DEMO_KEY}") // Use DEMO_KEY if the property is not set
     private String usdaApiKey;
 
     public NutritionalInfo getNutritionalInfo(List<RecipeIngredient> ingredients) {
         RestTemplate restTemplate = new RestTemplate();
         NutritionalInfo totalNutrients = new NutritionalInfo();
+
+        // Initialize with default values
+        totalNutrients.setCalories("N/A");
+        totalNutrients.setProtein("N/A");
+        totalNutrients.setFat("N/A");
+        totalNutrients.setCarbohydrates("N/A");
+        totalNutrients.setSugar("N/A");
         totalNutrients.setVitamins(new HashMap<>());
         totalNutrients.setMinerals(new HashMap<>());
         totalNutrients.setAllergens(new ArrayList<>());
+
+        if (ingredients == null || usdaApiKey.equals("DEMO_KEY")) {
+            return totalNutrients; // Return default values if no ingredients or no API key
+        }
 
         double totalCalories = 0;
         double totalProtein = 0;
@@ -50,35 +61,24 @@ public class USDAService {
                         double value = nutrient.get("value").getAsDouble();
 
                         switch (nutrientName) {
-                            case "Energy":
-                                totalCalories += value;
-                                break;
-                            case "Protein":
-                                totalProtein += value;
-                                break;
-                            case "Total lipid (fat)":
-                                totalFat += value;
-                                break;
-                            case "Carbohydrate, by difference":
-                                totalCarbs += value;
-                                break;
-                            case "Sugars, total including NLEA":
-                                totalSugar += value;
-                                break;
+                            case "Energy": totalCalories += value; break;
+                            case "Protein": totalProtein += value; break;
+                            case "Total lipid (fat)": totalFat += value; break;
+                            case "Carbohydrate, by difference": totalCarbs += value; break;
+                            case "Sugars, total including NLEA": totalSugar += value; break;
                         }
                     }
                 }
             } catch (Exception e) {
-                // Handle exceptions for network errors or parsing errors
-                System.err.println("Error fetching nutritional data for " + ingredient.getName() + ": " + e.getMessage());
+                System.err.println("Warning: Could not fetch nutritional data for '" + ingredient.getName() + "'. Skipping.");
             }
         }
 
-        totalNutrients.setCalories(String.format("%.2f kcal", totalCalories));
-        totalNutrients.setProtein(String.format("%.2f g", totalProtein));
-        totalNutrients.setFat(String.format("%.2f g", totalFat));
-        totalNutrients.setCarbohydrates(String.format("%.2f g", totalCarbs));
-        totalNutrients.setSugar(String.format("%.2f g", totalSugar));
+        totalNutrients.setCalories(String.format("%.0f kcal", totalCalories));
+        totalNutrients.setProtein(String.format("%.1f g", totalProtein));
+        totalNutrients.setFat(String.format("%.1f g", totalFat));
+        totalNutrients.setCarbohydrates(String.format("%.1f g", totalCarbs));
+        totalNutrients.setSugar(String.format("%.1f g", totalSugar));
 
         return totalNutrients;
     }

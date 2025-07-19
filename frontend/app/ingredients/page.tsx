@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
-import { getIngredients } from "@/app/actions/ingredients";
 import { redirect } from "next/navigation";
 import { Refrigerator } from "lucide-react";
 import IngredientsClient from "@/components/IngredientsClient";
+import ClientOnly from "@/components/ClientOnly";
 
 export default async function IngredientsPage() {
   const session = await auth();
@@ -10,7 +10,8 @@ export default async function IngredientsPage() {
     redirect("/");
   }
 
-  const ingredients = await getIngredients(session.user.email);
+  // The page no longer fetches initialIngredients.
+  // It only sets up the structure and defers to the client component.
 
   return (
     <div className="container mx-auto py-10 px-4">
@@ -21,8 +22,11 @@ export default async function IngredientsPage() {
           Here are the ingredients you currently have on hand. Add or remove items to get the best recipe recommendations.
         </p>
       </div>
-
-      <IngredientsClient initialIngredients={ingredients} />
+      
+      <ClientOnly>
+        {/* The client component now fetches its own data */}
+        <IngredientsClient />
+      </ClientOnly>
     </div>
   );
 }

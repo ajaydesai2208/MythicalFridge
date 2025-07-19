@@ -1,7 +1,6 @@
 "use server";
 
-// Assuming Ingredient type is defined, if not, it should be.
-// For example, in frontend/app/actions/ingredients.ts
+// Define the types to match our backend models
 export interface Ingredient {
   id: number;
   name: string;
@@ -10,27 +9,32 @@ export interface Ingredient {
   expirationDate: string;
 }
 
-// Define the types to match our backend models
 interface RecipeIngredient {
   name: string;
   quantity: string;
 }
 
+// Ensure Instruction type is defined
+interface Instruction {
+  id: number;
+  step: string;
+}
+
 interface NutritionalInfo {
-  calories: string;
-  protein: string;
-  fat: string;
-  carbohydrates: string;
-  sugar: string;
+  calories?: string;
+  protein?: string;
+  fat?: string;
+  carbohydrates?: string;
+  sugar?: string;
 }
 
 interface Recipe {
   id: number;
   title: string;
   description: string;
-  instructions: string;
+  instructions: Instruction[]; // Use the Instruction type
   ingredients: RecipeIngredient[];
-  nutritionalInfo: NutritionalInfo;
+  nutritionalInfo?: NutritionalInfo;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";

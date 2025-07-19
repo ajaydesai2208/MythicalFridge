@@ -21,34 +21,31 @@ interface Ingredient {
   name: string;
   quantity: number;
   unit: string;
-  expirationDate: string; // Comes as a string from the backend
+  expirationDate: string;
 }
 
-interface IngredientsClientProps {
-  initialIngredients: Ingredient[];
-}
-
-export default function IngredientsClient({
-  initialIngredients,
-}: IngredientsClientProps) {
-  const [ingredients, setIngredients] = useState(initialIngredients);
-  const [isMounted, setIsMounted] = useState(false);
+export default function IngredientsClient() {
+  // State is now initialized as empty and a loading flag is added
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { data: session } = useSession();
 
+  // useEffect hook to fetch data only on the client-side
   useEffect(() => {
-    // This ensures the component only renders its full content on the client
-    setIsMounted(true);
-  }, []);
+    if (session?.user?.email) {
+      getIngredients(session.user.email).then(data => {
+        setIngredients(data);
+        setIsLoading(false); // Stop loading once data is fetched
+      });
+    }
+  }, [session]); // This effect runs when the user session becomes available
 
   const handleAddIngredient = async (name: string, quantity: number, unit: string, expirationDate: Date | undefined) => {
     if (!session?.user?.email || !expirationDate) return;
 
     const newIngredientData = { name, quantity, unit, expirationDate: format(expirationDate, "yyyy-MM-dd") };
-    
-    // Call the server action and wait for the actual created ingredient
     const addedIngredient = await addIngredient(session.user.email, newIngredientData);
     
-    // Update the state with the confirmed ingredient from the database
     if (addedIngredient) {
         setIngredients(prev => [...prev, addedIngredient]);
     }
@@ -56,15 +53,13 @@ export default function IngredientsClient({
 
   const handleDelete = async (id: number) => {
     if (!session?.user?.email) return;
-    // Call server action to delete
     await deleteIngredientById(id);
-    // Refetch the list from the server to ensure consistency
     const updatedIngredients = await getIngredients(session.user.email);
     setIngredients(updatedIngredients);
   };
 
-  // Render a loading state until the component is mounted on the client
-  if (!isMounted) {
+  // Display a loading skeleton while data is being fetched
+  if (isLoading) {
     return (
         <div className="max-w-4xl mx-auto animate-pulse">
             <div className="flex justify-end mb-4">
@@ -75,6 +70,7 @@ export default function IngredientsClient({
     );
   }
 
+  // Once loading is complete, render the actual component
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-end mb-4">

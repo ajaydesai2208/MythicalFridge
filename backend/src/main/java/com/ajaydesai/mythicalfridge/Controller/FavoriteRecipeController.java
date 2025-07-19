@@ -18,14 +18,16 @@ public class FavoriteRecipeController {
     @Autowired
     private FavoriteRecipeService favoriteRecipeService;
 
+    // This DTO class can be defined here or in its own file
+    public static class ToggleFavoriteRequest {
+        public String userEmail;
+        public Long recipeId;
+    }
+
     @PostMapping("/toggle")
-    public ResponseEntity<FavoriteRecipe> toggleFavorite(@RequestBody Map<String, Object> payload) {
-        String userEmail = (String) payload.get("userEmail");
-        // The frontend will send the recipe as a map, which needs to be handled.
-        // For now, this is a placeholder for that logic.
-        Recipe recipe = new Recipe(); // You'll need to map the payload to a Recipe object
-        FavoriteRecipe favoriteRecipe = favoriteRecipeService.toggleFavorite(userEmail, recipe);
-        return ResponseEntity.ok(favoriteRecipe);
+    public ResponseEntity<?> toggleFavorite(@RequestBody ToggleFavoriteRequest request) {
+        favoriteRecipeService.toggleFavorite(request.userEmail, request.recipeId);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/get")

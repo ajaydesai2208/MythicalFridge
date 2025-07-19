@@ -19,7 +19,12 @@ export function SignInButton() {
 
 export function SignOutButton() {
   return (
-    <Button onClick={() => signOut()} variant="outline">
+    <Button
+      onClick={() => signOut()}
+      variant="outline"
+      // THE FIX: Added default text colors for both themes.
+      className="text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+    >
        <LogOut className="mr-2 h-4 w-4" />
        Sign Out
     </Button>

@@ -8,18 +8,23 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity
-public class RecipeIngredient {
+public class Instruction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-    private String quantity;
+    @Column(length = 2000)
+    private String step;
 
-    // THE FIX: Add a reference back to the parent Recipe
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id")
     @JsonBackReference
     private Recipe recipe;
+
+    public Instruction(String step) {
+        this.step = step;
+    }
+
+    public Instruction() {}
 }

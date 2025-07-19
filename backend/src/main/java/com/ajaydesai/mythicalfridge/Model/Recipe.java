@@ -1,5 +1,6 @@
 package com.ajaydesai.mythicalfridge.Model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,14 +21,15 @@ public class Recipe {
     @Column(length = 1000)
     private String description;
 
-    @Column(length = 2000)
-    private String instructions;
+    // THE FIX: Converted to a full One-to-Many relationship
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Instruction> instructions;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "recipe_id")
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<RecipeIngredient> ingredients;
 
     @Embedded
     private NutritionalInfo nutritionalInfo;
-
 }
