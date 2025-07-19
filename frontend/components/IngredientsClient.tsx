@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { addIngredient, deleteIngredientById } from "@/app/actions/ingredients";
+import { addIngredient, deleteIngredientById, getIngredients } from "@/app/actions/ingredients";
 import { useSession } from "next-auth/react";
 import { PlusCircle, Trash2, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -32,42 +32,48 @@ export default function IngredientsClient({
   initialIngredients,
 }: IngredientsClientProps) {
   const [ingredients, setIngredients] = useState(initialIngredients);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { data: session } = useSession();
+
+  useEffect(() => {
+    // This ensures the component only renders its full content on the client
+    setIsMounted(true);
+  }, []);
 
   const handleAddIngredient = async (name: string, quantity: number, unit: string, expirationDate: Date | undefined) => {
     if (!session?.user?.email || !expirationDate) return;
 
     const newIngredientData = { name, quantity, unit, expirationDate: format(expirationDate, "yyyy-MM-dd") };
     
-    // Optimistically update the UI
-    const tempId = Date.now(); // Temporary ID for the key
-    setIngredients(prev => [...prev, { id: tempId, ...newIngredientData }]);
-
-    try {
-        const addedIngredient = await addIngredient(session.user.email, newIngredientData);
-        // Replace the temporary ingredient with the real one from the server
-        setIngredients(prev => prev.map(ing => ing.id === tempId ? addedIngredient : ing));
-    } catch (error) {
-        console.error("Failed to add ingredient:", error);
-        // Revert the optimistic update on failure
-        setIngredients(prev => prev.filter(ing => ing.id !== tempId));
+    // Call the server action and wait for the actual created ingredient
+    const addedIngredient = await addIngredient(session.user.email, newIngredientData);
+    
+    // Update the state with the confirmed ingredient from the database
+    if (addedIngredient) {
+        setIngredients(prev => [...prev, addedIngredient]);
     }
   };
 
   const handleDelete = async (id: number) => {
-    // Optimistically remove from UI
-    const originalIngredients = ingredients;
-    setIngredients(ingredients.filter((ing) => ing.id !== id));
-
-    try {
-        await deleteIngredientById(id);
-    } catch (error) {
-        console.error("Failed to delete ingredient:", error);
-        // Revert on failure
-        setIngredients(originalIngredients);
-    }
+    if (!session?.user?.email) return;
+    // Call server action to delete
+    await deleteIngredientById(id);
+    // Refetch the list from the server to ensure consistency
+    const updatedIngredients = await getIngredients(session.user.email);
+    setIngredients(updatedIngredients);
   };
+
+  // Render a loading state until the component is mounted on the client
+  if (!isMounted) {
+    return (
+        <div className="max-w-4xl mx-auto animate-pulse">
+            <div className="flex justify-end mb-4">
+                 <div className="h-10 w-36 bg-slate-700 rounded-md"></div>
+            </div>
+            <div className="h-60 w-full bg-slate-900/50 border border-slate-700/50 rounded-lg"></div>
+        </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">

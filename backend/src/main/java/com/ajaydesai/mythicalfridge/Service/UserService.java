@@ -26,6 +26,7 @@ public class UserService implements UserServiceInterface {
     @Transactional
     public UserEntity findOrCreateUser(User user) {
         UserEntity userEntity = userRepository.findByEmail(user.getEmail());
+
         if (userEntity == null) {
             userEntity = new UserEntity();
             userEntity.setEmail(user.getEmail());
@@ -33,10 +34,13 @@ public class UserService implements UserServiceInterface {
 
             Fridge fridge = new Fridge(userEntity);
             userEntity.setFridge(fridge);
-            fridgeService.saveFridge(fridge);
-
+            userRepository.save(userEntity);
+        } else if (userEntity.getFridge() == null) {
+            Fridge fridge = new Fridge(userEntity);
+            userEntity.setFridge(fridge);
             userRepository.save(userEntity);
         }
+
         return userEntity;
     }
 
@@ -59,7 +63,6 @@ public class UserService implements UserServiceInterface {
         result.setWeightGainCalories(maintenanceCalories + 500);
         result.setExtremeWeightGainCalories(maintenanceCalories + 1000);
 
-        // Calculate macronutrients for maintenance
         result.setBalancedMacronutrientGoals(calculateMacronutrients(maintenanceCalories, 0.3, 0.4, 0.3));
         result.setLowFatMacronutrientGoals(calculateMacronutrients(maintenanceCalories, 0.2, 0.5, 0.3));
         result.setLowCarbsMacronutrientGoals(calculateMacronutrients(maintenanceCalories, 0.4, 0.2, 0.4));
@@ -77,12 +80,13 @@ public class UserService implements UserServiceInterface {
 
     @Override
     @Transactional
-    public void setUserGoals(String userEmail, double calories, double protein, double carbs, double fat) {
-        UserEntity user = userRepository.findByEmail(userEmail);
-        user.setDailyCalorieGoal(calories);
-        user.setDailyProteinGoal(protein);
-        user.setDailyCarbGoal(carbs);
-        user.setDailyFatGoal(fat);
+    public void setUserGoals(SetGoalsRequestDTO request) {
+        UserEntity user = userRepository.findByEmail(request.getUserEmail());
+        GoalsDTO goals = request.getGoals();
+        user.setDailyCalorieGoal(goals.getCalories());
+        user.setDailyProteinGoal(goals.getProtein());
+        user.setDailyCarbGoal(goals.getCarbs());
+        user.setDailyFatGoal(goals.getFat());
         userRepository.save(user);
     }
 

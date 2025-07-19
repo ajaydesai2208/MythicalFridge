@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { UtensilsCrossed } from "lucide-react";
 import { auth } from "@/auth";
-import UserDropdownMenuComponent from "../UserDropdownMenuComponent";
-import { ThemeToggle } from "../ThemeToggle";
-import { Button } from "../ui/button";
-import { SignInButton } from "../auth-components";
+import UserDropdownMenuComponent from "./UserDropdownMenuComponent";
+import { ThemeToggle } from "./ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { SignInButton } from "./auth-components";
 
 export default async function NavBar() {
   const session = await auth();

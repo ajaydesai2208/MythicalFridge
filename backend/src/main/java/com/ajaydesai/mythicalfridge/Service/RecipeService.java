@@ -5,11 +5,13 @@ import com.ajaydesai.mythicalfridge.Model.NutritionalInfo;
 import com.ajaydesai.mythicalfridge.Model.Recipe;
 import com.ajaydesai.mythicalfridge.Repository.RecipeRepository;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,20 +38,30 @@ public class RecipeService {
             ? "none"
             : String.join(", ", dietaryFilters);
 
-        String jsonResponse = recipeAssistant.chat(ingredientList, filters);
-        Gson gson = new Gson();
-        Type recipeListType = new TypeToken<List<Recipe>>(){}.getType();
-        List<Recipe> recipes = gson.fromJson(jsonResponse, recipeListType);
+        try {
+            String jsonResponse = recipeAssistant.chat(ingredientList, filters);
+            Gson gson = new Gson();
+            Type recipeListType = new TypeToken<List<Recipe>>(){}.getType();
+            List<Recipe> recipes = gson.fromJson(jsonResponse, recipeListType);
 
-        if (recipes != null) {
-            for (Recipe recipe : recipes) {
-                NutritionalInfo nutritionalInfo = usdaService.getNutritionalInfo(recipe.getIngredients());
-                recipe.setNutritionalInfo(nutritionalInfo);
-                recipeRepository.save(recipe);
+            if (recipes != null) {
+                for (Recipe recipe : recipes) {
+                    NutritionalInfo nutritionalInfo = usdaService.getNutritionalInfo(recipe.getIngredients());
+                    recipe.setNutritionalInfo(nutritionalInfo);
+                    recipeRepository.save(recipe);
+                }
             }
-        }
+            return recipes;
 
-        return recipes;
+        } catch (JsonSyntaxException e) {
+            System.err.println("Error: Failed to parse JSON response from OpenAI.");
+            e.printStackTrace();
+            return Collections.emptyList(); // Return an empty list instead of crashing
+        } catch (Exception e) {
+            System.err.println("An unexpected error occurred in getRecipes.");
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
     }
 
     public Recipe getRecipeById(Long id) {

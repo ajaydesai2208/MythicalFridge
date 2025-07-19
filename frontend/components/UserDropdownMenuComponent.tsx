@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Session } from "next-auth";
 import Link from "next/link";
-import { SignOutButton } from "../auth-components";
+import { SignOutButton } from "@/components/auth-components";
 import { LayoutDashboard, LogOut, User as UserIcon } from "lucide-react";
 
 type UserDropdownMenuComponentProps = {

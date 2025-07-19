@@ -25,6 +25,15 @@ public class IngredientService {
     public Ingredient addOrUpdateIngredient(String userEmail, Ingredient ingredient) {
         UserEntity user = userRepository.findByEmail(userEmail);
         Fridge fridge = user.getFridge();
+
+        // Defensive check: If user somehow has no fridge, create one.
+        if (fridge == null) {
+            fridge = new Fridge(user);
+            user.setFridge(fridge);
+            user = userRepository.save(user);
+            fridge = user.getFridge();
+        }
+
         Optional<Ingredient> existingIngredient = ingredientRepository.findByNameAndFridge(ingredient.getName(), fridge);
 
         if (existingIngredient.isPresent()) {
@@ -41,8 +50,21 @@ public class IngredientService {
         ingredientRepository.deleteById(ingredientId);
     }
 
+    @Transactional // Ensure changes are persisted
     public List<Ingredient> getIngredients(String userEmail) {
         UserEntity user = userRepository.findByEmail(userEmail);
-        return user.getFridge().getIngredients();
+        Fridge fridge = user.getFridge();
+
+        // THE ROBUST FIX: If the user has no fridge, create one.
+        if (fridge == null) {
+            fridge = new Fridge(user);
+            user.setFridge(fridge);
+            userRepository.save(user);
+            // The new fridge will have no ingredients, so we return its empty list.
+            return user.getFridge().getIngredients();
+        }
+
+        // If the fridge exists, return its ingredients.
+        return fridge.getIngredients();
     }
 }

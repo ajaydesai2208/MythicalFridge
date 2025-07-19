@@ -3,7 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "next-auth/react";
-import NavBar from "@/components/NavBar/NavBar";
+import NavBar from "@/components/NavBar";
 
 export const metadata: Metadata = {
   title: {

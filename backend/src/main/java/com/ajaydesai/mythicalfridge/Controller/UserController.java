@@ -3,7 +3,7 @@ package com.ajaydesai.mythicalfridge.Controller;
 import com.ajaydesai.mythicalfridge.Entity.UserEntity;
 import com.ajaydesai.mythicalfridge.Model.CalorieCalcDTO;
 import com.ajaydesai.mythicalfridge.Model.CalorieCalcResultDTO;
-import com.ajaydesai.mythicalfridge.Model.MacronutrientGoals;
+import com.ajaydesai.mythicalfridge.Model.SetGoalsRequestDTO;
 import com.ajaydesai.mythicalfridge.Model.User;
 import com.ajaydesai.mythicalfridge.Service.UserServiceInterface;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,16 +33,8 @@ public class UserController {
     }
 
     @PostMapping("/setGoals")
-    public ResponseEntity<?> setGoals(@RequestBody Map<String, Object> payload) {
-        String userEmail = (String) payload.get("userEmail");
-        Map<String, Number> goals = (Map<String, Number>) payload.get("goals");
-        userService.setUserGoals(
-                userEmail,
-                goals.get("calories").doubleValue(),
-                goals.get("protein").doubleValue(),
-                goals.get("carbs").doubleValue(),
-                goals.get("fat").doubleValue()
-        );
+    public ResponseEntity<?> setGoals(@RequestBody SetGoalsRequestDTO request) {
+        userService.setUserGoals(request);
         return ResponseEntity.ok().build();
     }
 

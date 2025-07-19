@@ -29,7 +29,7 @@ public class UserEntity {
     @JsonManagedReference
     private Fridge fridge;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<FavoriteRecipe> favoriteRecipes;
 
     private Double dailyCalorieGoal = 0.0;

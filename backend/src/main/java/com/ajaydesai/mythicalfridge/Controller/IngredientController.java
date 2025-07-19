@@ -2,6 +2,8 @@ package com.ajaydesai.mythicalfridge.Controller;
 
 import com.ajaydesai.mythicalfridge.Model.Ingredient;
 import com.ajaydesai.mythicalfridge.Service.IngredientService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,12 +19,16 @@ public class IngredientController {
     @Autowired
     private IngredientService ingredientService;
 
+    // ObjectMapper to convert the incoming map to an Ingredient object
+    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
     @PostMapping("/add")
     public ResponseEntity<Ingredient> addIngredient(@RequestBody Map<String, Object> payload) {
         String userEmail = (String) payload.get("userEmail");
-        // Assuming ingredient data is nested in the payload
-        Map<String, Object> ingredientData = (Map<String, Object>) payload.get("ingredient");
-        Ingredient ingredient = new Ingredient(); // Map ingredientData to Ingredient object
+        
+        // Correctly convert the ingredient data from the payload into an Ingredient object
+        Ingredient ingredient = mapper.convertValue(payload.get("ingredient"), Ingredient.class);
+
         Ingredient savedIngredient = ingredientService.addOrUpdateIngredient(userEmail, ingredient);
         return ResponseEntity.ok(savedIngredient);
     }

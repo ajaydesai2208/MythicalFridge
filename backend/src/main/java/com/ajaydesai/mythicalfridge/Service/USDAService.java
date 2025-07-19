@@ -2,6 +2,7 @@ package com.ajaydesai.mythicalfridge.Service;
 
 import com.ajaydesai.mythicalfridge.Model.NutritionalInfo;
 import com.ajaydesai.mythicalfridge.Model.RecipeIngredient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.google.gson.JsonArray;
@@ -16,8 +17,8 @@ import java.util.Map;
 @Service
 public class USDAService {
 
-    private final String API_KEY = System.getenv("USDA_API_KEY");
-    private final String API_URL = "https://api.nal.usda.gov/fdc/v1/foods/search?api_key=" + API_KEY + "&query=";
+    @Value("${usda.api.key}")
+    private String usdaApiKey;
 
     public NutritionalInfo getNutritionalInfo(List<RecipeIngredient> ingredients) {
         RestTemplate restTemplate = new RestTemplate();
@@ -32,8 +33,10 @@ public class USDAService {
         double totalCarbs = 0;
         double totalSugar = 0;
 
+        String apiUrl = "https://api.nal.usda.gov/fdc/v1/foods/search?api_key=" + usdaApiKey + "&query=";
+
         for (RecipeIngredient ingredient : ingredients) {
-            String url = API_URL + ingredient.getName();
+            String url = apiUrl + ingredient.getName();
             try {
                 String response = restTemplate.getForObject(url, String.class);
                 JsonObject jsonObject = JsonParser.parseString(response).getAsJsonObject();

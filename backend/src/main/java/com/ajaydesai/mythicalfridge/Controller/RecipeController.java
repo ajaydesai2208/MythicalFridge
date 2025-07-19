@@ -4,6 +4,7 @@ import com.ajaydesai.mythicalfridge.Model.Ingredient;
 import com.ajaydesai.mythicalfridge.Model.Recipe;
 import com.ajaydesai.mythicalfridge.Service.RecipeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +20,12 @@ public class RecipeController {
     @Autowired
     private RecipeService recipeService;
 
+    // Initialize ObjectMapper and register the JavaTimeModule to handle LocalDate
+    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
     @PostMapping("/get")
     public ResponseEntity<List<Recipe>> getRecipes(@RequestBody Map<String, Object> payload) {
-        ObjectMapper mapper = new ObjectMapper();
-
+        
         List<Ingredient> ingredients = mapper.convertValue(
             payload.get("ingredients"),
             mapper.getTypeFactory().constructCollectionType(List.class, Ingredient.class)

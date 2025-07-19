@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getRecipes } from "@/app/actions/recipes";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -8,29 +8,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RecipeCard, RecipeCardSkeleton } from "./RecipeCard";
 import { AlertTriangle, Sparkles } from "lucide-react";
-import { Ingredient } from "@/app/actions/ingredients"; // Assuming you have this type defined
+import { Ingredient } from "@/app/actions/ingredients";
 
-// Define the types based on your backend models
-interface RecipeIngredient {
-  name: string;
-  quantity: string;
-}
-
-interface NutritionalInfo {
-  calories: string;
-  protein: string;
-  fat: string;
-  carbohydrates: string;
-  sugar: string;
-}
-
+// Define the Recipe type
 interface Recipe {
   id: number;
   title: string;
   description: string;
   instructions: string;
-  ingredients: RecipeIngredient[];
-  nutritionalInfo: NutritionalInfo;
+  ingredients: { name: string; quantity: string; }[];
+  nutritionalInfo: { calories: string; protein: string; fat: string; carbohydrates: string; sugar: string; };
 }
 
 const dietaryOptions = [
@@ -48,7 +35,11 @@ export default function RecipesClient({ initialIngredients }: RecipesClientProps
   const [recipes, setRecipes] = useState<Recipe[] | null>(null);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { data: session } = useSession();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleFilterChange = (filterId: string) => {
     setSelectedFilters((prev) =>
@@ -59,18 +50,19 @@ export default function RecipesClient({ initialIngredients }: RecipesClientProps
   };
 
   const handleGenerateRecipes = async () => {
-    if (!session?.user?.email) return;
-
     setIsLoading(true);
-    setRecipes(null); // Clear previous recipes
+    setRecipes(null);
     const generatedRecipes = await getRecipes(initialIngredients, selectedFilters);
     setRecipes(generatedRecipes);
     setIsLoading(false);
   };
 
+  if (!isMounted) {
+      return null; // Render nothing on the server to prevent hydration mismatch
+  }
+
   return (
     <div>
-      {/* Filter Controls */}
       <div className="mb-8 p-6 bg-slate-900/50 border border-slate-700/50 rounded-lg">
         <h3 className="text-lg font-semibold mb-4 text-white">Dietary Filters</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -81,7 +73,7 @@ export default function RecipesClient({ initialIngredients }: RecipesClientProps
                 onCheckedChange={() => handleFilterChange(option.id)}
                 checked={selectedFilters.includes(option.id)}
               />
-              <Label htmlFor={option.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <Label htmlFor={option.id} className="text-sm font-medium leading-none">
                 {option.label}
               </Label>
             </div>
@@ -95,7 +87,6 @@ export default function RecipesClient({ initialIngredients }: RecipesClientProps
         </div>
       </div>
 
-      {/* Recipe Display Area */}
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[...Array(3)].map((_, i) => <RecipeCardSkeleton key={i} />)}
@@ -110,12 +101,12 @@ export default function RecipesClient({ initialIngredients }: RecipesClientProps
         </div>
       )}
 
-      {recipes && recipes.length === 0 && (
+      {recipes && recipes.length === 0 && !isLoading && (
          <div className="text-center py-10">
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
             <h3 className="mt-4 text-lg font-semibold">No Recipes Found</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              We couldn&apos;t conjure any recipes with those filters. Try adjusting your selections.
+              We couldn't conjure any recipes. Check your API keys or try adjusting your selections.
             </p>
         </div>
       )}
