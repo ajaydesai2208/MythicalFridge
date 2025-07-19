@@ -1,5 +1,7 @@
 "use server";
 
+import { auth } from "@/auth";
+
 // Define the types to match our backend models
 export interface Ingredient {
   id: number;
@@ -14,7 +16,6 @@ interface RecipeIngredient {
   quantity: string;
 }
 
-// Ensure Instruction type is defined
 interface Instruction {
   id: number;
   step: string;
@@ -32,9 +33,10 @@ interface Recipe {
   id: number;
   title: string;
   description: string;
-  instructions: Instruction[]; // Use the Instruction type
+  instructions: Instruction[];
   ingredients: RecipeIngredient[];
   nutritionalInfo?: NutritionalInfo;
+  isFavorited: boolean; // <-- Add the new field
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
@@ -43,6 +45,14 @@ export async function getRecipes(
   ingredients: Ingredient[],
   dietaryFilters: string[]
 ): Promise<Recipe[] | null> {
+  const session = await auth();
+  const userEmail = session?.user?.email;
+
+  if (!userEmail) {
+    console.error("User is not authenticated.");
+    return null;
+  }
+
   if (!ingredients || ingredients.length === 0) {
     console.error("Ingredients are required to generate recipes.");
     return null;
@@ -54,7 +64,9 @@ export async function getRecipes(
       headers: {
         "Content-Type": "application/json",
       },
+      // THE FIX: Add userEmail to the request body
       body: JSON.stringify({
+        userEmail: userEmail,
         ingredients: ingredients,
         dietaryFilters: dietaryFilters,
       }),

@@ -1,7 +1,9 @@
 package com.ajaydesai.mythicalfridge.Service;
 
+import com.ajaydesai.mythicalfridge.Entity.UserEntity;
 import com.ajaydesai.mythicalfridge.Model.*;
 import com.ajaydesai.mythicalfridge.Repository.RecipeRepository;
+import com.ajaydesai.mythicalfridge.Repository.UserRepository;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +27,18 @@ public class RecipeService {
     private RecipeRepository recipeRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private USDAService usdaService;
 
     @Transactional
-    public List<Recipe> getRecipes(List<Ingredient> ingredients, List<String> dietaryFilters) {
+    public List<Recipe> getRecipes(String userEmail, List<Ingredient> ingredients, List<String> dietaryFilters) {
+        UserEntity user = userRepository.findByEmail(userEmail);
+        List<Long> favoriteRecipeIds = user.getFavoriteRecipes().stream()
+                .map(fav -> fav.getRecipe().getId())
+                .collect(Collectors.toList());
+
         String ingredientList = ingredients.stream()
                 .sorted(Comparator.comparing(Ingredient::getExpirationDate, Comparator.nullsLast(Comparator.naturalOrder())))
                 .map(Ingredient::getName)
@@ -57,13 +67,12 @@ public class RecipeService {
                 recipe.setDescription(dto.getDescription());
 
                 List<Instruction> instructionEntities = dto.getInstructions().stream()
-                        .map(step -> new Instruction(step))
+                        .map(Instruction::new)
                         .collect(Collectors.toList());
                 recipe.setInstructions(instructionEntities);
                 
                 recipe.setIngredients(dto.getIngredients());
 
-                // Set back-references for both collections
                 for (Instruction instruction : recipe.getInstructions()) {
                     instruction.setRecipe(recipe);
                 }
@@ -74,7 +83,13 @@ public class RecipeService {
                 NutritionalInfo nutritionalInfo = usdaService.getNutritionalInfo(recipe.getIngredients());
                 recipe.setNutritionalInfo(nutritionalInfo);
 
-                finalRecipes.add(recipeRepository.save(recipe));
+                Recipe savedRecipe = recipeRepository.save(recipe);
+
+                // THE FIX: Check if the *saved* recipe's ID is in the user's favorites
+                if (favoriteRecipeIds.contains(savedRecipe.getId())) {
+                    savedRecipe.setFavorited(true);
+                }
+                finalRecipes.add(savedRecipe);
             }
             return finalRecipes;
 

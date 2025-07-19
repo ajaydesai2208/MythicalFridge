@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Setter
@@ -25,12 +26,12 @@ public class UserEntity {
     @Column(nullable = false)
     private String email;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonManagedReference
     private Fridge fridge;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<FavoriteRecipe> favoriteRecipes;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FavoriteRecipe> favoriteRecipes = new ArrayList<>();
 
     private Double dailyCalorieGoal = 0.0;
     private Double dailyProteinGoal = 0.0;
@@ -42,16 +43,17 @@ public class UserEntity {
     private Double currentCarbs = 0.0;
     private Double currentFat = 0.0;
 
-
-    public UserEntity(long id, String username, String firstName, String lastName, String email) {
-        this.id = id;
-        this.username = username;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
+    // --- HELPER METHODS FOR DATA CONSISTENCY ---
+    public void addFavorite(FavoriteRecipe favorite) {
+        favoriteRecipes.add(favorite);
+        favorite.setUser(this);
     }
 
-    public UserEntity() {
+    public void removeFavorite(FavoriteRecipe favorite) {
+        favoriteRecipes.remove(favorite);
+        favorite.setUser(null);
     }
+    // --- END HELPER METHODS ---
 
+    public UserEntity() {}
 }

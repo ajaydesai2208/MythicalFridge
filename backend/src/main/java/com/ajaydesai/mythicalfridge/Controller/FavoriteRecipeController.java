@@ -1,6 +1,5 @@
 package com.ajaydesai.mythicalfridge.Controller;
 
-import com.ajaydesai.mythicalfridge.Model.FavoriteRecipe;
 import com.ajaydesai.mythicalfridge.Model.Recipe;
 import com.ajaydesai.mythicalfridge.Service.FavoriteRecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +24,10 @@ public class FavoriteRecipeController {
     }
 
     @PostMapping("/toggle")
-    public ResponseEntity<?> toggleFavorite(@RequestBody ToggleFavoriteRequest request) {
-        favoriteRecipeService.toggleFavorite(request.userEmail, request.recipeId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Map<String, Boolean>> toggleFavorite(@RequestBody ToggleFavoriteRequest request) {
+        // THE FIX: Return the new favorite status to the frontend
+        boolean isFavorited = favoriteRecipeService.toggleFavorite(request.userEmail, request.recipeId);
+        return ResponseEntity.ok(Map.of("isFavorited", isFavorited));
     }
 
     @GetMapping("/get")

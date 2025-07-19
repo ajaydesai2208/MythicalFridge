@@ -20,12 +20,13 @@ public class RecipeController {
     @Autowired
     private RecipeService recipeService;
 
-    // Initialize ObjectMapper and register the JavaTimeModule to handle LocalDate
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @PostMapping("/get")
     public ResponseEntity<List<Recipe>> getRecipes(@RequestBody Map<String, Object> payload) {
-        
+        // THE FIX: Extract the userEmail from the payload
+        String userEmail = (String) payload.get("userEmail");
+
         List<Ingredient> ingredients = mapper.convertValue(
             payload.get("ingredients"),
             mapper.getTypeFactory().constructCollectionType(List.class, Ingredient.class)
@@ -36,7 +37,8 @@ public class RecipeController {
             mapper.getTypeFactory().constructCollectionType(List.class, String.class)
         );
 
-        List<Recipe> recipes = recipeService.getRecipes(ingredients, dietaryFilters);
+        // Pass the userEmail to the service
+        List<Recipe> recipes = recipeService.getRecipes(userEmail, ingredients, dietaryFilters);
         return ResponseEntity.ok(recipes);
     }
 }

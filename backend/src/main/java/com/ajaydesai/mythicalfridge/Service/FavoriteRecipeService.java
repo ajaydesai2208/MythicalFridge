@@ -24,34 +24,44 @@ public class FavoriteRecipeService {
     private UserRepository userRepository;
 
     @Autowired
-    private RecipeRepository recipeRepository; // <-- Add RecipeRepository
+    private RecipeRepository recipeRepository;
 
     @Transactional
-    public FavoriteRecipe toggleFavorite(String userEmail, Long recipeId) {
+    public boolean toggleFavorite(String userEmail, Long recipeId) {
         UserEntity user = userRepository.findByEmail(userEmail);
         Optional<Recipe> recipeOpt = recipeRepository.findById(recipeId);
 
         if (recipeOpt.isEmpty()) {
-            // Handle case where recipe is not found
-            return null;
+            throw new IllegalStateException("Recipe not found with id: " + recipeId);
         }
         Recipe recipe = recipeOpt.get();
 
-        FavoriteRecipe existingFavorite = favoriteRecipeRepository.findByUserAndRecipe(user, recipe);
+        Optional<FavoriteRecipe> existingFavoriteOpt = user.getFavoriteRecipes().stream()
+                .filter(fav -> fav.getRecipe().getId().equals(recipeId))
+                .findFirst();
 
-        if (existingFavorite != null) {
-            favoriteRecipeRepository.delete(existingFavorite);
-            return null; // Indicate unfavorited
+        if (existingFavoriteOpt.isPresent()) {
+            // THE DEFINITIVE FIX: Use the helper method to ensure data consistency before deleting
+            FavoriteRecipe favoriteToRemove = existingFavoriteOpt.get();
+            user.removeFavorite(favoriteToRemove);
+            favoriteRecipeRepository.delete(favoriteToRemove);
+            return false; // It is no longer a favorite
         } else {
             FavoriteRecipe newFavorite = new FavoriteRecipe(user, recipe);
-            return favoriteRecipeRepository.save(newFavorite);
+            user.addFavorite(newFavorite);
+            // We don't need to save the repository here, the transaction will persist the change to the user
+            return true; // It is now a favorite
         }
     }
 
     public List<Recipe> getFavorites(String userEmail) {
         UserEntity user = userRepository.findByEmail(userEmail);
-        return favoriteRecipeRepository.findByUser(user).stream()
-                .map(FavoriteRecipe::getRecipe)
+        return user.getFavoriteRecipes().stream()
+                .map(favorite -> {
+                    Recipe recipe = favorite.getRecipe();
+                    recipe.setFavorited(true); // Explicitly mark as favorited
+                    return recipe;
+                })
                 .collect(Collectors.toList());
     }
 }

@@ -21,7 +21,6 @@ public class Recipe {
     @Column(length = 1000)
     private String description;
 
-    // THE FIX: Converted to a full One-to-Many relationship
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Instruction> instructions;
@@ -32,4 +31,8 @@ public class Recipe {
 
     @Embedded
     private NutritionalInfo nutritionalInfo;
+
+    // THE FIX: Add a transient field to track favorite status
+    @Transient
+    private boolean isFavorited;
 }
