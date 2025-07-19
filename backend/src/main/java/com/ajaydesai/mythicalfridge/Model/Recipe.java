@@ -1,6 +1,7 @@
 package com.ajaydesai.mythicalfridge.Model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,7 +33,12 @@ public class Recipe {
     @Embedded
     private NutritionalInfo nutritionalInfo;
 
-    // THE FIX: Add a transient field to track favorite status
     @Transient
     private boolean isFavorited;
+
+    // THE DEFINITIVE FIX: This annotation forces the JSON response to include the 'isFavorited' field.
+    @JsonProperty("isFavorited")
+    public boolean isFavorited() {
+        return isFavorited;
+    }
 }

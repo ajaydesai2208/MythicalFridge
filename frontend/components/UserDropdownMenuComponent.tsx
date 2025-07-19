@@ -28,7 +28,7 @@ export default function UserDropdownMenuComponent({
 
   return (
     <DropdownMenu>
-      {/* THE FIX IS HERE: The 'asChild' prop has been removed. */}
+      {/* THE FIX: The 'asChild' prop has been removed from the trigger. */}
       <DropdownMenuTrigger className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background">
         <Avatar>
           <AvatarImage src={image ?? ""} alt={name ?? ""} />

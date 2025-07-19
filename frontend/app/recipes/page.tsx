@@ -22,9 +22,10 @@ export default async function RecipesPage() {
         <p className="mt-2 text-muted-foreground">
           You need to add ingredients to your fridge before we can generate recipes.
         </p>
-        <Button asChild className="mt-6">
-          <Link href="/ingredients">Add Ingredients</Link>
-        </Button>
+        {/* THE FIX: Wrap the Button with the Link, remove asChild */}
+        <Link href="/ingredients">
+            <Button className="mt-6">Add Ingredients</Button>
+        </Link>
       </div>
     );
   }

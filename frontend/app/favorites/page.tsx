@@ -22,9 +22,10 @@ export default async function FavoritesPage() {
         <p className="mt-2 text-muted-foreground">
           You haven't saved any favorite recipes. Go find some you love!
         </p>
-        <Button asChild className="mt-6">
-          <Link href="/recipes">Generate Recipes</Link>
-        </Button>
+        {/* THE FIX: Wrap the Button with the Link, remove asChild */}
+        <Link href="/recipes">
+            <Button className="mt-6">Generate Recipes</Button>
+        </Link>
       </div>
     );
   }
@@ -38,7 +39,6 @@ export default async function FavoritesPage() {
           Here are all the magical recipes you've saved for later.
         </p>
       </div>
-      {/* THE FIX: Pass the prop with the correct name 'initialRecipes' */}
       <FavoritesClient initialRecipes={favoriteRecipes} />
     </div>
   );

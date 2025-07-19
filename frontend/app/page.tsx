@@ -22,9 +22,12 @@ export default async function Home() {
         <div className="pt-4">
           {session ? (
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold">
-                <Link href="/ingredients">Enter Your Fridge</Link>
-              </Button>
+              {/* THE FIX: Wrap the Button with the Link, remove asChild */}
+              <Link href="/ingredients">
+                <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold">
+                  Enter Your Fridge
+                </Button>
+              </Link>
               <SignOutButton />
             </div>
           ) : (
